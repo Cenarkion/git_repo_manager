@@ -38,10 +38,10 @@ The script needs a GitHub Personal Access Token with the `delete_repo` scope to 
     ```
     (For persistent setting, add this line to your shell's profile file, e.g., `~/.bashrc`, `~/.zshrc`).
 
-2.  **Configuration File (`~/.rolecreate/config.ini`):**
-    Create a directory `~/.rolecreate` and a file `config.ini` inside it. The file should have a `[github]` section with a `token` key:
+2.  **Configuration File (`~/.git_repo_manager/config.ini`):**
+    Create a directory `~/.git_repo_manager` and a file `config.ini` inside it. The file should have a `[github]` section with a `token` key:
     ```ini
-    # ~/.rolecreate/config.ini
+    # ~/.git_repo_manager/config.ini
     [github]
     token = your_github_personal_access_token
     ```
@@ -84,13 +84,13 @@ Delete a single repository owned by your configured Git username:
 Delete multiple repositories for a specific owner:
 
 ```bash
-./delete_repos.py --repos my-old-project another-unused-repo --owner my-github-username
+./git_repo_manager.py --repos my-old-project another-unused-repo --owner my-github-username
 ```
 
 Delete a repository belonging to an organization:
 
 ```bash
-python delete_repos.py --repos legacy-app --owner MyOrg
+python git_repo_manager.py --repos legacy-app --owner MyOrg
 ```
 
 **Important:** The script will ask for confirmation before deleting each repository. Type `yes` to proceed with the deletion.
