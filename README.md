@@ -63,14 +63,14 @@ git config --global user.name "YourGitHubUsername"
 To run the script, you can execute it directly after making it executable:
 
 ```bash
-chmod +x git_repo_manager.py
-./git_repo_manager.py --repos <repo1> [<repo2> ...] [--owner <owner_username_or_org>]
+chmod +x git_repo_manager
+./git_repo_manager --repos <repo1> [<repo2> ...] [--owner <owner_username_or_org>]
 ```
 
 Alternatively, you can explicitly run it with Python:
 
 ```bash
-python git_repo_manager.py --repos <repo1> [<repo2> ...] [--owner <owner_username_or_org>]
+python git_repo_manager --repos <repo1> [<repo2> ...] [--owner <owner_username_or_org>]
 ```
 
 ### Examples
@@ -78,19 +78,19 @@ python git_repo_manager.py --repos <repo1> [<repo2> ...] [--owner <owner_usernam
 Delete a single repository owned by your configured Git username:
 
 ```bash
-./git_repo_manager.py --repos my-old-project
+./git_repo_manager --repos my-old-project
 ```
 
 Delete multiple repositories for a specific owner:
 
 ```bash
-./git_repo_manager.py --repos my-old-project another-unused-repo --owner my-github-username
+./git_repo_manager --repos my-old-project another-unused-repo --owner my-github-username
 ```
 
 Delete a repository belonging to an organization:
 
 ```bash
-python git_repo_manager.py --repos legacy-app --owner MyOrg
+python git_repo_manager --repos legacy-app --owner MyOrg
 ```
 
 **Important:** The script will ask for confirmation before deleting each repository. Type `yes` to proceed with the deletion.

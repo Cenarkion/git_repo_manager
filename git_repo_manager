@@ -57,9 +57,9 @@ def delete_github_repo(repo_owner, repo_name, token):
             print("Forbidden. Check if your token has the 'delete_repo' scope.")
         sys.exit(1)
 
-def create_and_push_repo(repo_name, repo_owner, token):
+def create_and_push_repo(repo_name, repo_owner, token, is_private):
     """Creates a private GitHub repository."""
-    repo_url = create_github_repo(repo_name, repo_owner, token)
+    repo_url = create_github_repo(repo_name, repo_owner, token, is_private)
     if not repo_url:
         print("Failed to get repository URL after creation.")
         sys.exit(1)
@@ -67,11 +67,59 @@ def create_and_push_repo(repo_name, repo_owner, token):
     print(f"  git remote add origin git@github.com:{repo_owner}/{repo_name}.git")
     print("  git push -u origin master")
 
+def init_and_push_current_dir(repo_name, repo_owner, token, is_private):
+    """Initializes a Git repository in the current directory, creates a remote GitHub repository, and pushes."""
+    try:
+        # Initialize Git in the current directory
+        subprocess.run(["git", "init"], check=True, capture_output=True, text=True)
+        print("Initialized empty Git repository in current directory.")
+
+        # Get user.name and user.email from git config
+        git_user_name = subprocess.check_output(["git", "config", "user.name"]).strip().decode()
+        git_user_email = subprocess.check_output(["git", "config", "user.email"]).strip().decode()
+
+        # Configure user.name and user.email if not already set
+        if not git_user_name:
+            git_user_name = input("Git user.name not found. Please enter your Git user.name: ")
+            subprocess.run(["git", "config", "user.name", git_user_name], check=True)
+        if not git_user_email:
+            git_user_email = input("Git user.email not found. Please enter your Git user.email: ")
+            subprocess.run(["git", "config", "user.email", git_user_email], check=True)
+
+        # Add all files and make an initial commit
+        subprocess.run(["git", "add", "."], check=True, capture_output=True, text=True)
+        subprocess.run(["git", "commit", "-m", "Initial commit from git_repo_manager"], check=True, capture_output=True, text=True)
+        print("Initial commit created.")
+
+        # Create remote repository on GitHub
+        repo_url = create_github_repo(repo_name, repo_owner, token, is_private)
+        if not repo_url:
+            print("Failed to get repository URL after creation.")
+            sys.exit(1)
+
+        # Add remote origin and push
+        subprocess.run(["git", "remote", "add", "origin", f"git@github.com:{repo_owner}/{repo_name}.git"], check=True, capture_output=True, text=True)
+        subprocess.run(["git", "branch", "-M", "main"], check=True, capture_output=True, text=True) # Ensure branch is 'main'
+        subprocess.run(["git", "push", "-u", "origin", "main"], check=True, capture_output=True, text=True)
+        print(f"Successfully pushed current directory to {repo_owner}/{repo_name} on GitHub.")
+
+    except subprocess.CalledProcessError as e:
+        print(f"Error during git operations: {e}")
+        print(f"Stderr: {e.stderr}")
+        sys.exit(1)
+    except FileNotFoundError as e:
+        print(f"Error: {e}. Make sure 'git' is installed and in your PATH.")
+        sys.exit(1)
+
 def main():
     parser = argparse.ArgumentParser(description="Manage GitHub repositories (delete or create/push).")
     parser.add_argument("--repos", "-r", nargs='+', help="List of repository names to delete.")
     parser.add_argument("--owner", "-o", help="The GitHub username or organization that owns the repositories. If not provided, it will try to get it from git config user.name.")
     parser.add_argument("--create-and-push", "-c", metavar="REPO_NAME", help="Create a new private GitHub repository with the given name and push the current local repository to it.")
+    parser.add_argument("--public", "-P", action="store_true", help="Make the newly created repository public (default is private).")
+    parser.add_argument("--init-and-push", "-i", metavar="REPO_NAME", help="Initialize a Git repository in the current directory, create a remote GitHub repository, and push the current directory's content.")
+    args = parser.parse_args()
+    parser.add_argument("--init-and-push", "-i", metavar="REPO_NAME", help="Initialize a Git repository in the current directory, create a remote GitHub repository, and push the current directory's content.")
     args = parser.parse_args()
 
     token = os.environ.get("GITHUB_TOKEN")
@@ -95,6 +143,13 @@ def main():
         print(f"GitHub token not provided. Please set the GITHUB_TOKEN environment variable, provide it in {CONFIG_FILE}, or enter the token when prompted.")
         sys.exit(1)
 
+    if args.create_and_push and args.init_and_push:
+        print("Error: Cannot use --create-and-push and --init-and-push together.")
+        sys.exit(1)
+    if args.repos and (args.create_and_push or args.init_and_push):
+        print("Error: Cannot use --repos with --create-and-push or --init-and-push.")
+        sys.exit(1)
+
     if args.create_and_push:
         repo_owner = args.owner
         if not repo_owner:
@@ -103,7 +158,16 @@ def main():
             except (subprocess.CalledProcessError, FileNotFoundError):
                 print("Repository owner not provided and could not be found in git config. Please use the --owner flag or set it in your git config (git config --global user.name <username>).")
                 sys.exit(1)
-        create_and_push_repo(args.create_and_push, repo_owner, token)
+        create_and_push_repo(args.create_and_push, repo_owner, token, not args.public)
+    elif args.init_and_push:
+        repo_owner = args.owner
+        if not repo_owner:
+            try:
+                repo_owner = subprocess.check_output(["git", "config", "user.name"]).strip().decode()
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                print("Repository owner not provided and could not be found in git config. Please use the --owner flag or set it in your git config (git config --global user.name <username>).")
+                sys.exit(1)
+        init_and_push_current_dir(args.init_and_push, repo_owner, token, not args.public)
     elif args.repos:
         repo_owner = args.owner
         if not repo_owner:
@@ -124,7 +188,7 @@ def main():
         parser.print_help()
         sys.exit(1)
 
-def create_github_repo(repo_name, repo_owner, token):
+def create_github_repo(repo_name, repo_owner, token, is_private):
     """Creates a private GitHub repository."""
     API_URL = "https://api.github.com"
     headers = {
@@ -148,7 +212,7 @@ def create_github_repo(repo_name, repo_owner, token):
     
     data = {
         "name": repo_name,
-        "private": True,
+        "private": is_private,
         "description": "A Python script for managing GitHub repositories."
     }
 
