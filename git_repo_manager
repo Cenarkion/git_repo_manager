@@ -117,9 +117,7 @@ def main():
     parser.add_argument("--owner", "-o", help="The GitHub username or organization that owns the repositories. If not provided, it will try to get it from git config user.name.")
     parser.add_argument("--create-and-push", "-c", metavar="REPO_NAME", help="Create a new private GitHub repository with the given name and push the current local repository to it.")
     parser.add_argument("--public", "-P", action="store_true", help="Make the newly created repository public (default is private).")
-    parser.add_argument("--init-and-push", "-i", metavar="REPO_NAME", help="Initialize a Git repository in the current directory, create a remote GitHub repository, and push the current directory's content.")
-    args = parser.parse_args()
-    parser.add_argument("--init-and-push", "-i", metavar="REPO_NAME", help="Initialize a Git repository in the current directory, create a remote GitHub repository, and push the current directory's content.")
+    parser.add_argument("--init-and-push", "-I", metavar="REPO_NAME", help="Initialize a Git repository in the current directory, create a remote GitHub repository, and push the current directory's content.")
     args = parser.parse_args()
 
     token = os.environ.get("GITHUB_TOKEN")
