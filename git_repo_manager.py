@@ -57,9 +57,9 @@ def delete_github_repo(repo_owner, repo_name, token):
             print("Forbidden. Check if your token has the 'delete_repo' scope.")
         sys.exit(1)
 
-def create_and_push_repo(repo_name, token):
+def create_and_push_repo(repo_name, repo_owner, token):
     """Creates a private GitHub repository."""
-    repo_url = create_github_repo(repo_name, token)
+    repo_url = create_github_repo(repo_name, repo_owner, token)
     if not repo_url:
         print("Failed to get repository URL after creation.")
         sys.exit(1)
@@ -96,7 +96,14 @@ def main():
         sys.exit(1)
 
     if args.create_and_push:
-        create_and_push_repo(args.create_and_push, token)
+        repo_owner = args.owner
+        if not repo_owner:
+            try:
+                repo_owner = subprocess.check_output(["git", "config", "user.name"]).strip().decode()
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                print("Repository owner not provided and could not be found in git config. Please use the --owner flag or set it in your git config (git config --global user.name <username>).")
+                sys.exit(1)
+        create_and_push_repo(args.create_and_push, repo_owner, token)
     elif args.repos:
         repo_owner = args.owner
         if not repo_owner:
@@ -117,7 +124,7 @@ def main():
         parser.print_help()
         sys.exit(1)
 
-def create_github_repo(repo_name, token):
+def create_github_repo(repo_name, repo_owner, token):
     """Creates a private GitHub repository."""
     API_URL = "https://api.github.com"
     headers = {
@@ -125,21 +132,37 @@ def create_github_repo(repo_name, token):
         "Accept": "application/vnd.github.v3+json"
     }
     
+    # Get authenticated user's login to differentiate between user and organization
+    try:
+        user_response = requests.get(f"{API_URL}/user", headers=headers)
+        user_response.raise_for_status()
+        authenticated_user_login = user_response.json()["login"]
+    except requests.exceptions.RequestException as err:
+        print(f"Error getting authenticated user: {err}")
+        sys.exit(1)
+
+    if repo_owner == authenticated_user_login:
+        create_url = f"{API_URL}/user/repos"
+    else:
+        create_url = f"{API_URL}/orgs/{repo_owner}/repos"
+    
     data = {
         "name": repo_name,
         "private": True,
-        "description": "A Python script to easily delete one or more GitHub repositories."
+        "description": "A Python script for managing GitHub repositories."
     }
 
     try:
-        r = requests.post(f"{API_URL}/user/repos", headers=headers, json=data)
+        r = requests.post(create_url, headers=headers, json=data)
         r.raise_for_status()
-        print(f"Successfully created private repository: {repo_name}")
+        print(f"Successfully created private repository: {repo_owner}/{repo_name}")
         return r.json()["clone_url"]
     except requests.exceptions.RequestException as err:
         print(f"Error creating repository {repo_name}: {err}")
         if r.status_code == 422:
             print("Repository with this name already exists or invalid name.")
+        elif r.status_code == 403:
+            print("Forbidden. Check if your token has the 'repo' scope or if you have permissions for the organization.")
         sys.exit(1)
 
 if __name__ == "__main__":
