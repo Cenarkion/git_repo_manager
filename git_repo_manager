@@ -87,6 +87,12 @@ def init_and_push_current_dir(repo_name, repo_owner, token, is_private):
             subprocess.run(["git", "config", "user.email", git_user_email], check=True)
 
         # Add all files and make an initial commit
+        # Check if there are any files in the current directory (excluding .git)
+        if not any(os.path.isfile(f) for f in os.listdir('.') if f != '.git'):
+            with open("README.md", "w") as f:
+                f.write(f"# {repo_name}\n\nThis is a new repository initialized by git_repo_manager.\n")
+            print("Created a default README.md as no files were found in the directory.")
+
         subprocess.run(["git", "add", "."], check=True, capture_output=True, text=True)
         subprocess.run(["git", "commit", "-m", "Initial commit from git_repo_manager"], check=True, capture_output=True, text=True)
         print("Initial commit created.")
