@@ -94,3 +94,7 @@ python git_repo_manager.py --repos legacy-app --owner MyOrg
 ```
 
 **Important:** The script will ask for confirmation before deleting each repository. Type `yes` to proceed with the deletion.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
