@@ -64,7 +64,7 @@ def create_and_push_repo(repo_name, repo_owner, token):
         print("Failed to get repository URL after creation.")
         sys.exit(1)
     print(f"Repository '{repo_name}' created successfully. You can now add it as a remote and push your local repository:")
-    print(f"  git remote add origin {repo_url}")
+    print(f"  git remote add origin git@github.com:{repo_owner}/{repo_name}.git")
     print("  git push -u origin master")
 
 def main():
