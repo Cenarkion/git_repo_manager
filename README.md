@@ -1,6 +1,6 @@
-# git_repo_deleter
+# git_repo_manager
 
-A Python script to easily delete one or more GitHub repositories directly from the command line. This tool interacts with the GitHub API to perform repository deletions, offering a convenient way to manage your GitHub projects.
+A Python script for managing GitHub repositories directly from the command line. This tool interacts with the GitHub API to perform various repository management tasks, offering a convenient way to manage your GitHub projects.
 
 ## Features
 
@@ -63,14 +63,14 @@ git config --global user.name "YourGitHubUsername"
 To run the script, you can execute it directly after making it executable:
 
 ```bash
-chmod +x delete_repos.py
-./delete_repos.py --repos <repo1> [<repo2> ...] [--owner <owner_username_or_org>]
+chmod +x git_repo_manager.py
+./git_repo_manager.py --repos <repo1> [<repo2> ...] [--owner <owner_username_or_org>]
 ```
 
 Alternatively, you can explicitly run it with Python:
 
 ```bash
-python delete_repos.py --repos <repo1> [<repo2> ...] [--owner <owner_username_or_org>]
+python git_repo_manager.py --repos <repo1> [<repo2> ...] [--owner <owner_username_or_org>]
 ```
 
 ### Examples
@@ -78,7 +78,7 @@ python delete_repos.py --repos <repo1> [<repo2> ...] [--owner <owner_username_or
 Delete a single repository owned by your configured Git username:
 
 ```bash
-./delete_repos.py --repos my-old-project
+./git_repo_manager.py --repos my-old-project
 ```
 
 Delete multiple repositories for a specific owner:
