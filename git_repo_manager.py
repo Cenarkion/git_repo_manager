@@ -9,7 +9,7 @@ import configparser
 import stat
 import subprocess
 
-CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".rolecreate")
+CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".git_repo_manager")
 CONFIG_FILE = os.path.join(CONFIG_DIR, "config.ini")
 
 def get_github_token_from_config():
@@ -20,6 +20,20 @@ def get_github_token_from_config():
         if 'github' in config and 'token' in config['github']:
             return config['github']['token']
     return None
+
+def save_github_token_to_config(token):
+    """Saves the GitHub token to the configuration file with secure permissions."""
+    os.makedirs(CONFIG_DIR, exist_ok=True)
+    
+    config = configparser.ConfigParser()
+    config['github'] = {'token': token}
+    
+    with open(CONFIG_FILE, 'w') as configfile:
+        config.write(configfile)
+    
+    # Set secure permissions (read/write only for owner)
+    os.chmod(CONFIG_FILE, stat.S_IRUSR | stat.S_IWUSR)
+    print(f"GitHub token saved to {CONFIG_FILE} with secure permissions.")
 
 def delete_github_repo(repo_owner, repo_name, token):
     """Deletes a GitHub repository."""
@@ -44,21 +58,14 @@ def delete_github_repo(repo_owner, repo_name, token):
         sys.exit(1)
 
 def create_and_push_repo(repo_name, token):
-    """Creates a private GitHub repository and pushes the current local repository to it."""
+    """Creates a private GitHub repository."""
     repo_url = create_github_repo(repo_name, token)
     if not repo_url:
         print("Failed to get repository URL after creation.")
         sys.exit(1)
-
-    try:
-        print(f"Adding remote origin: {repo_url}")
-        subprocess.run(["git", "remote", "add", "origin", repo_url], check=True)
-        print("Pushing to GitHub...")
-        subprocess.run(["git", "push", "-u", "origin", "master"], check=True)
-        print(f"Successfully pushed to {repo_url}")
-    except subprocess.CalledProcessError as e:
-        print(f"Error during git operations: {e}")
-        sys.exit(1)
+    print(f"Repository '{repo_name}' created successfully. You can now add it as a remote and push your local repository:")
+    print(f"  git remote add origin {repo_url}")
+    print("  git push -u origin master")
 
 def main():
     parser = argparse.ArgumentParser(description="Manage GitHub repositories (delete or create/push).")
@@ -74,12 +81,18 @@ def main():
     if not token:
         try:
             token = getpass.getpass("GitHub token not found. Please enter your GitHub personal access token: ")
+            save_choice = input(f"Save token to {CONFIG_FILE} for future use? (y/N): ").lower()
+            if save_choice == 'y':
+                save_github_token_to_config(token)
         except getpass.GetPassWarning:
             print("Could not read password securely.")
             token = input("GitHub token not found. Please enter your GitHub personal access token: ")
+            save_choice = input(f"Save token to {CONFIG_FILE} for future use? (y/N): ").lower()
+            if save_choice == 'y':
+                save_github_token_to_config(token)
 
     if not token:
-        print("GitHub token not provided. Please set the GITHUB_TOKEN environment variable, provide it in ~/.rolecreate/config.ini, or enter the token when prompted.")
+        print(f"GitHub token not provided. Please set the GITHUB_TOKEN environment variable, provide it in {CONFIG_FILE}, or enter the token when prompted.")
         sys.exit(1)
 
     if args.create_and_push:
